@@ -1,6 +1,7 @@
 const Meter = require("../models/Meter");
 
 exports.createMeter = async (req, res) => {
+  try{
   const { meterNumber } = req.body;
 
   const meter = await Meter.create({
@@ -9,6 +10,9 @@ exports.createMeter = async (req, res) => {
   });
 
   res.json(meter);
+}catch (err){
+  res.status(500).json({ error: err.message });
+}
 };
 
 exports.getMeter = async (req, res) => {
