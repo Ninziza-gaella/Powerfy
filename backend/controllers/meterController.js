@@ -1,27 +1,62 @@
-const Meter = require("../models/Meter");
+//Get Meter
+exports.getMeter = async (req, res) => {
+  try {
+    const meter = await Meter.findOne({
+       meterNumber: req.params.id,
+       user:req.user.id
+      });
 
-exports.createMeter = async (req, res) => {
-  try{
-  const { meterNumber } = req.body;
+    if (!meter) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
-  const meter = await Meter.create({
-    meterNumber,
-    user: req.user.id,
-  });
+    // OPTIONAL: auto-expiry check
+    if (meter.expiresAt && new Date() > meter.expiresAt) {
+      meter.powerStatus = "OFF";
+      meter.expiresAt = null;
+      await meter.save();
+    }
 
-  res.json(meter);
-}catch (err){
-  res.status(500).json({ error: err.message });
+    let message = "No power";
+
+if (meter.powerStatus === "ON") {
+  message = "Power available";
 }
+
+res.json({
+  status: meter.powerStatus,
+  expiresAt: meter.expiresAt,
+  message
+});
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-exports.getMeter = async (req, res) => {
-  const meter = await Meter.findOne({ meterNumber: req.params.id });
+//Create Meter
+exports.createMeter = async (req, res) => {
+  try {
+    const meterNumber = req.body.meterNumber?.trim();
 
-  if (!meter) return res.status(404).json({ error: "Not found" });
+    if (!meterNumber) {
+      return res.status(400).json({ error: "Meter number required" });
+    }
 
-  res.json({
-    units: meter.units,
-    status: meter.status,
-  });
+    const exists = await Meter.findOne({ meterNumber });
+    if (exists) {
+      return res.status(400).json({ error: "Meter already exists" });
+    }
+
+    const meter = await Meter.create({
+      meterNumber,
+      user: req.user.id,
+      powerStatus: "OFF"
+    });
+
+    res.json(meter);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };

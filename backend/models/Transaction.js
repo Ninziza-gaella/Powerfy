@@ -6,8 +6,14 @@ const transactionSchema = new mongoose.Schema({
   token: String,
   units: Number,
   provider: String,
-  status: { type: String, default: "success" },
-  date: { type: Date, default: Date.now },
+  status: { 
+    type: String, 
+    default: "success" 
+  },
+  date: { 
+    type: Date, 
+    default: Date.now 
+  }
 });
 
 module.exports = mongoose.model("Transaction", transactionSchema);

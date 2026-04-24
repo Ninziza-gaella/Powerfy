@@ -27,12 +27,19 @@ exports.buy = async (req, res) => {
 exports.verifyToken = async (req, res) => {
   try {
     const { token } = req.query;
+    if(!token){
+      return res.status(400).send("NO_Token")
+    }
 
     const tx = await Transaction.findOne({ token });
-    if (!tx) return res.status(400).send("INVALID");
+    if (!tx) {
+      return res.status(400).send("INVALID");
+    }
 
     const meter = await Meter.findOne({ meterNumber: tx.meterNumber });
-    if (!meter) return res.status(404).send("METER NOT FOUND");
+    if (!meter) {
+      return res.status(404).send("METER NOT FOUND");
+    }
 
     const now = new Date();
     const extraTime = 60 * 60 * 1000; // 1 hour power
@@ -45,6 +52,10 @@ exports.verifyToken = async (req, res) => {
 
     meter.powerStatus = "ON";
 
+    if(tx.status==="used"){
+      return res.status(400).send("ALREDY_USED")
+    }
+    tx.status= "used";
     await meter.save();
 
     res.send("VALID");
